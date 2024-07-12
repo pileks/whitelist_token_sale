@@ -1,7 +1,7 @@
 use crate::{
-    constants::{PDA_SEED_WHITELIST_ALLOWANCE, PDA_SEED_WHITELIST_SALE},
+    constants::{PDA_SEED_ALLOWANCE, PDA_SEED_SALE},
     error::WhitelistError,
-    state::{WhitelistAllowance, WhitelistSale},
+    state::{Allowance, WhitelistSale},
 };
 use anchor_lang::prelude::*;
 use std::mem::size_of;
@@ -10,7 +10,7 @@ use std::mem::size_of;
 #[instruction(sale_name: String)]
 pub struct RegisterForWhitelist<'info> {
     #[account(
-        seeds=[PDA_SEED_WHITELIST_SALE.as_ref(), sale_name.as_bytes()],
+        seeds=[PDA_SEED_SALE.as_ref(), sale_name.as_bytes()],
         bump
     )]
     pub sale: Account<'info, WhitelistSale>,
@@ -21,11 +21,11 @@ pub struct RegisterForWhitelist<'info> {
     #[account(
         init,
         payer=signer,
-        space=size_of::<WhitelistAllowance>() + 8,
-        seeds=[PDA_SEED_WHITELIST_ALLOWANCE.as_ref(), sale_name.as_bytes(), signer.key().as_ref()],
+        space=size_of::<Allowance>() + 8,
+        seeds=[PDA_SEED_ALLOWANCE.as_ref(), sale_name.as_bytes(), signer.key().as_ref()],
         bump
     )]
-    pub allowance: Account<'info, WhitelistAllowance>,
+    pub allowance: Account<'info, Allowance>,
 
     pub system_program: Program<'info, System>,
 }

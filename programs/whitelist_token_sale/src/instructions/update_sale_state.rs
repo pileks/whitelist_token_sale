@@ -1,4 +1,4 @@
-use crate::{constants::PDA_SEED_WHITELIST_SALE, error::WhitelistError, state::WhitelistSale};
+use crate::{constants::PDA_SEED_SALE, error::WhitelistError, state::WhitelistSale};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -6,7 +6,7 @@ use anchor_lang::prelude::*;
 pub struct UpdateSaleState<'info> {
     #[account(
         mut,
-        seeds=[PDA_SEED_WHITELIST_SALE.as_ref(), sale_name.as_bytes()],
+        seeds=[PDA_SEED_SALE.as_ref(), sale_name.as_bytes()],
         bump
     )]
     pub sale: Account<'info, WhitelistSale>,

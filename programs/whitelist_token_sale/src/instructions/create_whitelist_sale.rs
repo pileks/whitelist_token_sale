@@ -1,4 +1,4 @@
-use crate::{constants::PDA_SEED_WHITELIST_SALE, state::WhitelistSale};
+use crate::{constants::PDA_SEED_SALE, state::WhitelistSale};
 use anchor_lang::prelude::*;
 use anchor_safe_math::SafeMath;
 use anchor_spl::{
@@ -14,7 +14,7 @@ pub struct CreateWhitelistSale<'info> {
         init,
         payer=signer,
         space=size_of::<WhitelistSale>() + 8,
-        seeds=[PDA_SEED_WHITELIST_SALE.as_ref(), sale_name.as_bytes()],
+        seeds=[PDA_SEED_SALE.as_ref(), sale_name.as_bytes()],
         bump
     )]
     pub sale: Account<'info, WhitelistSale>,
@@ -24,7 +24,7 @@ pub struct CreateWhitelistSale<'info> {
 
     #[account(address=TOKEN_PROGRAM_ID)]
     pub token_program: Program<'info, Token>,
-    
+
     #[account(address=ASSOCIATED_TOKEN_PROGRAM_ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 

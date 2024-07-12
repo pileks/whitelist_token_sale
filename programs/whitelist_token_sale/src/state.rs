@@ -12,6 +12,6 @@ pub struct WhitelistSale {
 }
 
 #[account]
-pub struct WhitelistAllowance {
+pub struct Allowance {
     pub tokens_bought: u64,
 }

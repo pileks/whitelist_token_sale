@@ -19,7 +19,7 @@ import {
 } from "@solana/spl-token";
 import { assert } from "chai";
 
-describe("whitelist_token_sale", () => {
+describe("Whitelist Token Sale - story", () => {
   // PRELUDE
 
   // Configure the client to use the local cluster.
@@ -202,7 +202,7 @@ describe("whitelist_token_sale", () => {
       SALE_NAME,
       BUYER_KEYPAIR_1.publicKey
     );
-    const allowance = await program.account.whitelistAllowance.fetch(
+    const allowance = await program.account.allowance.fetch(
       allowanceAddress
     );
 
