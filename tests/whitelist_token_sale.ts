@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program, getProvider, BN, AnchorError } from "@coral-xyz/anchor";
+import { Program, getProvider, BN } from "@coral-xyz/anchor";
 import { WhitelistTokenSale } from "../target/types/whitelist_token_sale";
 import {
   Keypair,
@@ -169,5 +169,61 @@ describe("whitelist_token_sale", () => {
       })
       .signers([OWNER_KEYPAIR])
       .rpc();
+
+    const saleStateAddress = getSaleStateAddress(SALE_NAME);
+    const saleState = await program.account.whitelistSale.fetch(
+      saleStateAddress
+    );
+
+    assert.isTrue(saleState.isRegistrationOpen);
+    assert.isFalse(saleState.isSaleOpen);
+  });
+
+  it("should disallow anyone other than owner to enable/disable whitelisting and buying", async () => {
+    await program.methods
+      .updateSaleState(SALE_NAME, false, true)
+      .accounts({
+        signer: BUYER_KEYPAIR_1.publicKey,
+      })
+      .signers([BUYER_KEYPAIR_1])
+      .rpc()
+      .then(
+        () => {
+          assert.fail(
+            "Non-owner should not be able to change sale state!"
+          );
+        },
+        (e: SendTransactionError) => {
+          assert.ok(
+            e.logs.some((log) => log.includes("Only the sale owner can perform this action"))
+          );
+        }
+      );;
+
+    const saleStateAddress = getSaleStateAddress(SALE_NAME);
+    const saleState = await program.account.whitelistSale.fetch(
+      saleStateAddress
+    );
+
+    assert.isTrue(saleState.isRegistrationOpen);
+    assert.isFalse(saleState.isSaleOpen);
+  });
+
+  it("should allow owner to enable/disable whitelisting and buying", async () => {
+    await program.methods
+      .updateSaleState(SALE_NAME, false, true)
+      .accounts({
+        signer: OWNER_KEYPAIR.publicKey,
+      })
+      .signers([OWNER_KEYPAIR])
+      .rpc();
+
+    const saleStateAddress = getSaleStateAddress(SALE_NAME);
+    const saleState = await program.account.whitelistSale.fetch(
+      saleStateAddress
+    );
+
+    assert.isFalse(saleState.isRegistrationOpen);
+    assert.isTrue(saleState.isSaleOpen);
   });
 });

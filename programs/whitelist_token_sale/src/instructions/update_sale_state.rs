@@ -17,6 +17,7 @@ pub struct UpdateSaleState<'info> {
 
 pub fn handle_update_sale_state(
     ctx: Context<UpdateSaleState>,
+    _sale_name: String,
     is_registration_open: bool,
     is_sale_open: bool,
 ) -> Result<()> {

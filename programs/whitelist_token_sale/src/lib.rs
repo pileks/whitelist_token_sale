@@ -31,6 +31,20 @@ pub mod whitelist_token_sale {
         )
     }
 
+    pub fn update_sale_state(
+        ctx: Context<UpdateSaleState>,
+        sale_name: String,
+        is_registration_open: bool,
+        is_sale_open: bool,
+    ) -> Result<()> {
+        update_sale_state::handle_update_sale_state(
+            ctx,
+            sale_name,
+            is_registration_open,
+            is_sale_open,
+        )
+    }
+
     pub fn register_for_whitelist(ctx: Context<AddToWhitelist>) -> Result<()> {
         register_for_whitelist::handle_register_for_whitelist(ctx)
     }
