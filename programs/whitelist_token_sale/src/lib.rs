@@ -45,7 +45,7 @@ pub mod whitelist_token_sale {
         )
     }
 
-    pub fn register_for_whitelist(ctx: Context<AddToWhitelist>) -> Result<()> {
-        register_for_whitelist::handle_register_for_whitelist(ctx)
+    pub fn register_for_whitelist(ctx: Context<RegisterForWhitelist>, sale_name: String) -> Result<()> {
+        register_for_whitelist::handle_register_for_whitelist(ctx, sale_name)
     }
 }

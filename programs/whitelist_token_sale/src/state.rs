@@ -13,6 +13,5 @@ pub struct WhitelistSale {
 
 #[account]
 pub struct WhitelistAllowance {
-    pub sale_id: u64,
     pub tokens_bought: u64,
 }

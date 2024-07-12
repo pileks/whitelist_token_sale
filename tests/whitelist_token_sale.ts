@@ -48,8 +48,17 @@ describe("whitelist_token_sale", () => {
   let buyerAta2: Account;
 
   const getSaleStateAddress = (name: string) => {
-    const [address, bump] = PublicKey.findProgramAddressSync(
+    const [address, _bump] = PublicKey.findProgramAddressSync(
       [Buffer.from("sale"), Buffer.from(name)],
+      program.programId
+    );
+
+    return address;
+  };
+
+  const getAllowanceAddress = (name: string, pubkey: PublicKey) => {
+    const [address, _bump] = PublicKey.findProgramAddressSync(
+      [Buffer.from("allowance"), Buffer.from(name), pubkey.toBytes()],
       program.programId
     );
 
@@ -175,8 +184,55 @@ describe("whitelist_token_sale", () => {
       saleStateAddress
     );
 
+    // Assert that a created sale has its registration open and its sale closed
     assert.isTrue(saleState.isRegistrationOpen);
     assert.isFalse(saleState.isSaleOpen);
+  });
+
+  it("should allow a buyer to register on whitelist while registration is open", async () => {
+    await program.methods
+      .registerForWhitelist(SALE_NAME)
+      .accounts({
+        signer: BUYER_KEYPAIR_1.publicKey,
+      })
+      .signers([BUYER_KEYPAIR_1])
+      .rpc();
+
+    const allowanceAddress = getAllowanceAddress(
+      SALE_NAME,
+      BUYER_KEYPAIR_1.publicKey
+    );
+    const allowance = await program.account.whitelistAllowance.fetch(
+      allowanceAddress
+    );
+
+    assert.equal(allowance.tokensBought.cmp(new BN(0)), 0);
+  });
+
+  it("should error when an already registered buyer tries to register on whitelist", async () => {
+    await program.methods
+      .registerForWhitelist(SALE_NAME)
+      .accounts({
+        signer: BUYER_KEYPAIR_1.publicKey,
+      })
+      .signers([BUYER_KEYPAIR_1])
+      .rpc()
+      .then(
+        () => {
+          assert.fail(
+            "Buyer should not be able to register for whitelist twice!"
+          );
+        },
+        (e: SendTransactionError) => {
+          assert.ok(
+            e.logs.some(
+              (log) =>
+                log.includes("account Address") &&
+                log.includes("already in use")
+            )
+          );
+        }
+      );
   });
 
   it("should disallow anyone other than owner to enable/disable whitelisting and buying", async () => {
@@ -189,16 +245,16 @@ describe("whitelist_token_sale", () => {
       .rpc()
       .then(
         () => {
-          assert.fail(
-            "Non-owner should not be able to change sale state!"
-          );
+          assert.fail("Non-owner should not be able to change sale state!");
         },
         (e: SendTransactionError) => {
           assert.ok(
-            e.logs.some((log) => log.includes("Only the sale owner can perform this action"))
+            e.logs.some((log) =>
+              log.includes("Only the sale owner can perform this action")
+            )
           );
         }
-      );;
+      );
 
     const saleStateAddress = getSaleStateAddress(SALE_NAME);
     const saleState = await program.account.whitelistSale.fetch(
@@ -225,5 +281,29 @@ describe("whitelist_token_sale", () => {
 
     assert.isFalse(saleState.isRegistrationOpen);
     assert.isTrue(saleState.isSaleOpen);
+  });
+
+  it("should disallow a buyer to register on whitelist while registration is closed", async () => {
+    await program.methods
+      .registerForWhitelist(SALE_NAME)
+      .accounts({
+        signer: BUYER_KEYPAIR_2.publicKey,
+      })
+      .signers([BUYER_KEYPAIR_2])
+      .rpc()
+      .then(
+        () => {
+          assert.fail(
+            "Buyer should not be able to register for whitelist while registration is closed!"
+          );
+        },
+        (e: SendTransactionError) => {
+          assert.ok(
+            e.logs.some((log) =>
+              log.includes("Whitelist registration is closed")
+            )
+          );
+        }
+      );
   });
 });
