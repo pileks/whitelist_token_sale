@@ -17,16 +17,14 @@ pub struct CreateWhitelistSale<'info> {
         seeds=[PDA_SEED_WHITELIST_SALE.as_ref(), sale_name.as_bytes()],
         bump
     )]
-    sale: Account<'info, WhitelistSale>,
+    pub sale: Account<'info, WhitelistSale>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    pub system_program: Program<'info, System>,
-
     #[account(address=TOKEN_PROGRAM_ID)]
     pub token_program: Program<'info, Token>,
-
+    
     #[account(address=ASSOCIATED_TOKEN_PROGRAM_ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
 
@@ -34,7 +32,8 @@ pub struct CreateWhitelistSale<'info> {
     pub token_mint: Account<'info, Mint>,
 
     #[account(
-        mut,
+        init,
+        payer=signer,
         associated_token::mint=token_mint,
         associated_token::authority=sale
     )]
@@ -46,6 +45,8 @@ pub struct CreateWhitelistSale<'info> {
         associated_token::authority=signer
     )]
     pub signer_ata: Account<'info, TokenAccount>,
+
+    pub system_program: Program<'info, System>,
 }
 
 pub fn handle_create_whitelist_sale(
@@ -57,14 +58,17 @@ pub fn handle_create_whitelist_sale(
 ) -> Result<()> {
     let sale_total_amount: u64 = max_buyers.safe_mul(max_tokens_per_buyer)?;
 
+    // Set sale account fields
     let sale = &mut ctx.accounts.sale;
 
-    sale.is_registration_open = true;
-    sale.is_sale_open = false;
+    sale.owner = ctx.accounts.signer.key.key();
     sale.lamports_per_token = lamports_per_token;
     sale.max_tokens_per_buyer = max_tokens_per_buyer;
     sale.max_buyers = max_buyers;
+    sale.is_registration_open = true;
+    sale.is_sale_open = false;
 
+    // Transfer funds into vault
     let transfer_from_buyer = TransferChecked {
         from: ctx.accounts.signer_ata.to_account_info(),
         to: ctx.accounts.vault_ata.to_account_info(),
@@ -78,7 +82,7 @@ pub fn handle_create_whitelist_sale(
 
     // We treat token amounts as integers, therefore we have to multiply by 10^mint.decimals
     let amount: u64 =
-        sale_total_amount.safe_mul(10_u64.pow(ctx.accounts.token_mint.decimals.into()))?;
+        sale_total_amount.safe_mul(10_u64.safe_pow(ctx.accounts.token_mint.decimals.into())?)?;
 
     match transfer_checked(cpi_ctx, amount, ctx.accounts.token_mint.decimals) {
         Ok(_) => Ok(()),

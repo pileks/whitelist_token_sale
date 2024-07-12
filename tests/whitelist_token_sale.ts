@@ -1,16 +1,173 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { Program, getProvider, BN, AnchorError } from "@coral-xyz/anchor";
 import { WhitelistTokenSale } from "../target/types/whitelist_token_sale";
+import {
+  Keypair,
+  PublicKey,
+  LAMPORTS_PER_SOL,
+  SendTransactionError,
+} from "@solana/web3.js";
+import {
+  createMint,
+  getOrCreateAssociatedTokenAccount,
+  mintTo,
+  getAccount,
+  getAssociatedTokenAddress,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  Account,
+} from "@solana/spl-token";
+import { assert } from "chai";
 
 describe("whitelist_token_sale", () => {
+  // PRELUDE
+
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.WhitelistTokenSale as Program<WhitelistTokenSale>;
+  const provider = getProvider();
 
-  it("Is initialized!", async () => {
-    // Add your test here.
-    const tx = await program.methods.initialize().rpc();
-    console.log("Your transaction signature", tx);
+  const program = anchor.workspace
+    .WhitelistTokenSale as Program<WhitelistTokenSale>;
+
+  // Number of decimals for the token mint
+  const DECIMALS = 6;
+
+  const SALE_NAME = "a token sale";
+  const SALE_PRICE_PER_TOKEN_LAMPORTS = new BN(LAMPORTS_PER_SOL / 100); // 1 token = 0.01 SOL
+
+  // Actors in our tests
+  const MINT_KEYPAIR = Keypair.generate();
+  const OWNER_KEYPAIR = Keypair.generate();
+  const BUYER_KEYPAIR_1 = Keypair.generate();
+  const BUYER_KEYPAIR_2 = Keypair.generate();
+
+  // We will set these in the before() call
+  let ownerAta: Account;
+  let buyerAta1: Account;
+  let buyerAta2: Account;
+
+  const getSaleStateAddress = (name: string) => {
+    const [address, bump] = PublicKey.findProgramAddressSync(
+      [Buffer.from("sale"), Buffer.from(name)],
+      program.programId
+    );
+
+    return address;
+  };
+
+  const confirmTransaction = async (tx: string) => {
+    const bh = await provider.connection.getLatestBlockhash();
+
+    return await provider.connection.confirmTransaction(
+      {
+        signature: tx,
+        blockhash: bh.blockhash,
+        lastValidBlockHeight: bh.lastValidBlockHeight,
+      },
+      "confirmed"
+    );
+  };
+
+  const airdropSol = async (pubkey: PublicKey, amount: number) => {
+    await confirmTransaction(
+      await provider.connection.requestAirdrop(
+        pubkey,
+        amount * LAMPORTS_PER_SOL
+      )
+    );
+  };
+
+  // BEGIN TESTS
+
+  before("airdrop SOL into wallets and create a token mint", async () => {
+    await airdropSol(OWNER_KEYPAIR.publicKey, 100);
+    await airdropSol(BUYER_KEYPAIR_1.publicKey, 100);
+    await airdropSol(BUYER_KEYPAIR_2.publicKey, 100);
+
+    await createMint(
+      provider.connection,
+      OWNER_KEYPAIR,
+      OWNER_KEYPAIR.publicKey,
+      OWNER_KEYPAIR.publicKey,
+      DECIMALS,
+      MINT_KEYPAIR
+    );
+
+    ownerAta = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      OWNER_KEYPAIR,
+      MINT_KEYPAIR.publicKey,
+      OWNER_KEYPAIR.publicKey
+    );
+
+    const mintAmount = 10_000 * Math.pow(10, DECIMALS); // Amount of tokens to mint (considering decimals)
+
+    await mintTo(
+      provider.connection,
+      OWNER_KEYPAIR,
+      MINT_KEYPAIR.publicKey,
+      ownerAta.address,
+      OWNER_KEYPAIR,
+      mintAmount
+    );
+
+    buyerAta1 = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      BUYER_KEYPAIR_1,
+      MINT_KEYPAIR.publicKey,
+      BUYER_KEYPAIR_1.publicKey
+    );
+
+    buyerAta2 = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      BUYER_KEYPAIR_2,
+      MINT_KEYPAIR.publicKey,
+      BUYER_KEYPAIR_2.publicKey
+    );
+  });
+
+  it("should fail initialization of a sale due to insufficient tokens", async () => {
+    await program.methods
+      .createWhitelistSale(
+        SALE_NAME,
+        SALE_PRICE_PER_TOKEN_LAMPORTS,
+        new BN(1000),
+        new BN(100)
+      )
+      .accounts({
+        signer: OWNER_KEYPAIR.publicKey,
+        tokenMint: MINT_KEYPAIR.publicKey,
+      })
+      .signers([OWNER_KEYPAIR])
+      .rpc()
+      .then(
+        () => {
+          assert.fail(
+            "User shouldn't be able to create a sale if they have insuficcient tokens!"
+          );
+        },
+        (e: SendTransactionError) => {
+          assert.ok(
+            e.logs.some((log) => log.includes("Error: insufficient funds"))
+          );
+        }
+      );
+  });
+
+  it("should initialize a sale from owner's wallet", async () => {
+    await program.methods
+      .createWhitelistSale(
+        SALE_NAME,
+        SALE_PRICE_PER_TOKEN_LAMPORTS,
+        new BN(1000),
+        new BN(10)
+      )
+      .accounts({
+        signer: OWNER_KEYPAIR.publicKey,
+        tokenMint: MINT_KEYPAIR.publicKey,
+      })
+      .signers([OWNER_KEYPAIR])
+      .rpc();
   });
 });
