@@ -222,6 +222,46 @@ describe("Whitelist Token Sale - story", () => {
     assert.equal(allowance.tokensBought.cmp(new BN(0)), 0);
   });
 
+  it("should only allow a specified number of buyers for whitelist sale", async () => {
+    // Register a number of buyers equal to SALE_MAX_BUYERS.
+    // Start from 1 because we already registered one buyer.
+    for (let i = new BN(1); i < SALE_MAX_BUYERS; i = i.add(new BN(1))) {
+      const buyer = new Keypair();
+
+      await airdropSol(buyer.publicKey, 100);
+
+      await program.methods
+        .registerForWhitelist(SALE_NAME)
+        .accounts({
+          signer: buyer.publicKey,
+        })
+        .signers([buyer])
+        .rpc();
+    }
+
+    const lateBuyer = new Keypair();
+
+    await airdropSol(lateBuyer.publicKey, 100);
+
+    await program.methods
+      .registerForWhitelist(SALE_NAME)
+      .accounts({
+        signer: lateBuyer.publicKey,
+      })
+      .signers([lateBuyer])
+      .rpc()
+      .then(
+        () => {
+          assert.fail(
+            "No more than the maximum number of buyers should be able to register for the whitelist!"
+          );
+        },
+        (e: SendTransactionError) => {
+          assert.ok(e.logs.some((log) => log.includes("BuyerLimitReached")));
+        }
+      );
+  });
+
   it("should disallow an already registered buyer tries to register on whitelist", async () => {
     await program.methods
       .registerForWhitelist(SALE_NAME)
@@ -440,5 +480,61 @@ describe("Whitelist Token Sale - story", () => {
           );
         }
       );
+  });
+
+  it("should disallow non-owner to close a sale", async () => {
+    await program.methods
+      .closeWhitelistSale(SALE_NAME)
+      .accounts({
+        signer: NON_BUYER_KEYPAIR.publicKey,
+        tokenMint: MINT_KEYPAIR.publicKey,
+      })
+      .signers([NON_BUYER_KEYPAIR])
+      .rpc()
+      .then(
+        () => {
+          assert.fail("Non-owner should not be able to close a sale!");
+        },
+        (e: SendTransactionError) => {
+          assert.ok(e.logs.some((log) => log.includes("OnlyOwner")));
+        }
+      );
+  });
+
+  it("should allow owner to close a sale and receive remaining funds back", async () => {
+    const ownerAtaBeforeClose = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      OWNER_KEYPAIR,
+      MINT_KEYPAIR.publicKey,
+      OWNER_KEYPAIR.publicKey
+    );
+
+    const saleStateAddress = getSaleStateAddress(SALE_NAME);
+    const saleAtaBeforeClose = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      OWNER_KEYPAIR,
+      MINT_KEYPAIR.publicKey,
+      saleStateAddress,
+      true
+    );
+
+    await program.methods
+      .closeWhitelistSale(SALE_NAME)
+      .accounts({
+        signer: OWNER_KEYPAIR.publicKey,
+        tokenMint: MINT_KEYPAIR.publicKey,
+      })
+      .signers([OWNER_KEYPAIR])
+      .rpc();
+    
+      const ownerAtaAfterClose = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        OWNER_KEYPAIR,
+        MINT_KEYPAIR.publicKey,
+        OWNER_KEYPAIR.publicKey
+      );
+      const ownerReceivedAmount = ownerAtaAfterClose.amount - ownerAtaBeforeClose.amount;
+      
+      assert.equal(ownerReceivedAmount, saleAtaBeforeClose.amount);
   });
 });

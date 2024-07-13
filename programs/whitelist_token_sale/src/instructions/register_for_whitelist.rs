@@ -43,7 +43,7 @@ pub fn handle_register_for_whitelist(
     );
 
     require!(
-        sale.num_buyers <= sale.max_buyers,
+        sale.num_buyers < sale.max_buyers,
         WhitelistError::BuyerLimitReached
     );
 

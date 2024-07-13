@@ -45,11 +45,18 @@ pub mod whitelist_token_sale {
         )
     }
 
-    pub fn register_for_whitelist(ctx: Context<RegisterForWhitelist>, sale_name: String) -> Result<()> {
+    pub fn register_for_whitelist(
+        ctx: Context<RegisterForWhitelist>,
+        sale_name: String,
+    ) -> Result<()> {
         register_for_whitelist::handle_register_for_whitelist(ctx, sale_name)
     }
 
     pub fn buy_tokens(ctx: Context<BuyTokens>, sale_name: String, amount: u64) -> Result<()> {
         buy_tokens::handle_buy_tokens(ctx, sale_name, amount)
+    }
+
+    pub fn close_whitelist_sale(ctx: Context<CloseWhitelistSale>, sale_name: String) -> Result<()> {
+        close_whitelist_sale::handle_close_whitelist_sale(ctx, sale_name)
     }
 }
