@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program, getProvider, BN } from "@coral-xyz/anchor";
-import { WhitelistTokenSale } from "../target/types/whitelist_token_sale";
+import { WhitelistTokenSaleVault } from "../target/types/whitelist_token_sale_vault";
 import {
   Keypair,
   PublicKey,
@@ -26,7 +26,7 @@ describe("Whitelist Token Sale - story", () => {
   const provider = getProvider();
 
   const program = anchor.workspace
-    .WhitelistTokenSale as Program<WhitelistTokenSale>;
+    .WhitelistTokenSaleVault as Program<WhitelistTokenSaleVault>;
 
   // Number of decimals for the token mint
   const DECIMALS = 6;

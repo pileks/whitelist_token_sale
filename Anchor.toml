@@ -5,7 +5,8 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-whitelist_token_sale = "EfRJk5TyimgnGU6PPikpfSByVXTj7MkdKMtezreYfwCZ"
+whitelist_token_sale_vault = "EfRJk5TyimgnGU6PPikpfSByVXTj7MkdKMtezreYfwCZ"
+whitelist_token_sale_mint = "Hdi7NzaRyd8YVVsdmz9nYVFfqHHcb5x8Trer5wkyTyq9"
 
 [registry]
 url = "https://api.apr.dev"

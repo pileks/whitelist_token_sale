@@ -10,7 +10,7 @@ pub use instructions::*;
 declare_id!("EfRJk5TyimgnGU6PPikpfSByVXTj7MkdKMtezreYfwCZ");
 
 #[program]
-pub mod whitelist_token_sale {
+pub mod whitelist_token_sale_vault {
     use create_whitelist_sale::CreateWhitelistSale;
 
     use super::*;

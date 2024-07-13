@@ -2549,7 +2549,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "whitelist_token_sale"
+name = "whitelist_token_sale_mint"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-safe-math",
+ "anchor-spl",
+]
+
+[[package]]
+name = "whitelist_token_sale_vault"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
