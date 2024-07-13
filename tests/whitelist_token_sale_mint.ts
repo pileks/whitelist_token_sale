@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program, getProvider, BN } from "@coral-xyz/anchor";
-import { WhitelistTokenSaleVault } from "../target/types/whitelist_token_sale_vault";
+import { WhitelistTokenSaleMint } from "../target/types/whitelist_token_sale_mint";
 import {
   Keypair,
   PublicKey,
@@ -9,15 +9,13 @@ import {
 } from "@solana/web3.js";
 import {
   createMint,
-  getOrCreateAssociatedTokenAccount,
-  mintTo,
   getAccount,
   getAssociatedTokenAddress,
-  Account,
+  getMint,
 } from "@solana/spl-token";
 import { assert } from "chai";
 
-describe("Vault Whitelist Token Sale - e2e story", () => {
+describe("Mint Whitelist Token Sale - e2e story", () => {
   // PRELUDE
 
   // Configure the client to use the local cluster.
@@ -26,7 +24,7 @@ describe("Vault Whitelist Token Sale - e2e story", () => {
   const provider = getProvider();
 
   const program = anchor.workspace
-    .WhitelistTokenSaleVault as Program<WhitelistTokenSaleVault>;
+    .WhitelistTokenSaleMint as Program<WhitelistTokenSaleMint>;
 
   // Number of decimals for the token mint
   const DECIMALS = 6;
@@ -41,9 +39,6 @@ describe("Vault Whitelist Token Sale - e2e story", () => {
   const OWNER_KEYPAIR = Keypair.generate();
   const BUYER_KEYPAIR = Keypair.generate();
   const NON_BUYER_KEYPAIR = Keypair.generate();
-
-  // We will set these in the before() call
-  let ownerAta: Account;
 
   const getSaleStateAddress = (name: string) => {
     const [address, _bump] = PublicKey.findProgramAddressSync(
@@ -100,55 +95,9 @@ describe("Vault Whitelist Token Sale - e2e story", () => {
       DECIMALS,
       MINT_KEYPAIR
     );
-
-    ownerAta = await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      OWNER_KEYPAIR,
-      MINT_KEYPAIR.publicKey,
-      OWNER_KEYPAIR.publicKey
-    );
-
-    const mintAmount = 10_000 * Math.pow(10, DECIMALS); // Amount of tokens to mint (considering decimals)
-
-    await mintTo(
-      provider.connection,
-      OWNER_KEYPAIR,
-      MINT_KEYPAIR.publicKey,
-      ownerAta.address,
-      OWNER_KEYPAIR,
-      mintAmount
-    );
   });
 
-  it("should fail initialization of a sale due to insufficient tokens", async () => {
-    await program.methods
-      .createWhitelistSale(
-        SALE_NAME,
-        SALE_PRICE_PER_TOKEN_LAMPORTS,
-        new BN(1000),
-        new BN(100)
-      )
-      .accounts({
-        signer: OWNER_KEYPAIR.publicKey,
-        tokenMint: MINT_KEYPAIR.publicKey,
-      })
-      .signers([OWNER_KEYPAIR])
-      .rpc()
-      .then(
-        () => {
-          assert.fail(
-            "User shouldn't be able to create a sale if they have insuficcient tokens!"
-          );
-        },
-        (e: SendTransactionError) => {
-          assert.ok(
-            e.logs.some((log) => log.includes("Error: insufficient funds"))
-          );
-        }
-      );
-  });
-
-  it("should initialize a sale from owner's wallet", async () => {
+  it("should initialize a sale and transfer mint authority to sale PDA", async () => {
     await program.methods
       .createWhitelistSale(
         SALE_NAME,
@@ -184,22 +133,9 @@ describe("Vault Whitelist Token Sale - e2e story", () => {
       `Expected max number of buyers to be ${SALE_MAX_BUYERS}, got ${saleState.maxBuyers}.`
     );
 
-    // Assert that the correct amount is in the ATA
-    const saleStateAta = await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      OWNER_KEYPAIR,
-      MINT_KEYPAIR.publicKey,
-      saleStateAddress,
-      true
-    );
-    const expectedAmount = SALE_MAX_TOKENS_PER_BUYER.mul(SALE_MAX_BUYERS).mul(
-      new BN(Math.pow(10, DECIMALS))
-    );
-    const actualAmount = new BN(saleStateAta.amount.toString());
-    assert.isTrue(
-      expectedAmount.eq(actualAmount),
-      `Expected vault ATA to contain ${expectedAmount} tokens, got ${actualAmount}`
-    );
+    // Assert that mint authority is assigned to sale PDA
+    const mint = await getMint(provider.connection, MINT_KEYPAIR.publicKey);
+    assert.equal(mint.mintAuthority.toBase58(), saleStateAddress.toBase58());
   });
 
   it("should allow a buyer to register on whitelist while registration is open", async () => {
@@ -481,14 +417,6 @@ describe("Vault Whitelist Token Sale - e2e story", () => {
   });
 
   it("should disallow non-owner to close a sale", async () => {
-    // Ensure that non-owner ATA exists
-    await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      NON_BUYER_KEYPAIR,
-      MINT_KEYPAIR.publicKey,
-      NON_BUYER_KEYPAIR.publicKey
-    );
-
     await program.methods
       .closeWhitelistSale(SALE_NAME)
       .accounts({
@@ -508,22 +436,6 @@ describe("Vault Whitelist Token Sale - e2e story", () => {
   });
 
   it("should allow owner to close a sale and receive remaining funds back", async () => {
-    const ownerAtaBeforeClose = await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      OWNER_KEYPAIR,
-      MINT_KEYPAIR.publicKey,
-      OWNER_KEYPAIR.publicKey
-    );
-
-    const saleStateAddress = getSaleStateAddress(SALE_NAME);
-    const saleAtaBeforeClose = await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      OWNER_KEYPAIR,
-      MINT_KEYPAIR.publicKey,
-      saleStateAddress,
-      true
-    );
-
     await program.methods
       .closeWhitelistSale(SALE_NAME)
       .accounts({
@@ -533,15 +445,11 @@ describe("Vault Whitelist Token Sale - e2e story", () => {
       .signers([OWNER_KEYPAIR])
       .rpc();
 
-    const ownerAtaAfterClose = await getOrCreateAssociatedTokenAccount(
-      provider.connection,
-      OWNER_KEYPAIR,
-      MINT_KEYPAIR.publicKey,
-      OWNER_KEYPAIR.publicKey
+    // Assert that mint authority is returned to owner
+    const mint = await getMint(provider.connection, MINT_KEYPAIR.publicKey);
+    assert.equal(
+      mint.mintAuthority.toBase58(),
+      OWNER_KEYPAIR.publicKey.toBase58()
     );
-    const ownerReceivedAmount =
-      ownerAtaAfterClose.amount - ownerAtaBeforeClose.amount;
-
-    assert.equal(ownerReceivedAmount, saleAtaBeforeClose.amount);
   });
 });

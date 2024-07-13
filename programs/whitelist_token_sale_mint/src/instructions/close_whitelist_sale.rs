@@ -2,7 +2,7 @@ use crate::{constants::PDA_SEED_SALE, error::WhitelistError, state::WhitelistSal
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::{AssociatedToken, ID as ASSOCIATED_TOKEN_PROGRAM_ID},
-    token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked, ID as TOKEN_PROGRAM_ID},
+    token::{set_authority, Mint, SetAuthority, Token, ID as TOKEN_PROGRAM_ID},
 };
 
 #[derive(Accounts)]
@@ -16,12 +16,8 @@ pub struct CloseWhitelistSale<'info> {
     )]
     pub sale: Account<'info, WhitelistSale>,
 
-    #[account(
-        mut,
-        associated_token::mint=token_mint,
-        associated_token::authority=sale
-    )]
-    pub vault_ata: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub token_mint: Account<'info, Mint>,
 
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -31,16 +27,6 @@ pub struct CloseWhitelistSale<'info> {
 
     #[account(address=ASSOCIATED_TOKEN_PROGRAM_ID)]
     pub associated_token_program: Program<'info, AssociatedToken>,
-
-    #[account()]
-    pub token_mint: Account<'info, Mint>,
-
-    #[account(
-        mut,
-        associated_token::mint=token_mint,
-        associated_token::authority=signer
-    )]
-    pub signer_ata: Account<'info, TokenAccount>,
 
     pub system_program: Program<'info, System>,
 }
@@ -54,11 +40,10 @@ pub fn handle_close_whitelist_sale(
         WhitelistError::OnlyOwner
     );
 
-    let transfer_to_buyer = TransferChecked {
-        from: ctx.accounts.vault_ata.to_account_info(),
-        to: ctx.accounts.signer_ata.to_account_info(),
-        authority: ctx.accounts.sale.to_account_info(),
-        mint: ctx.accounts.token_mint.to_account_info(),
+    // Set sale owner's account as mint authority
+    let set_mint_authority = SetAuthority {
+        account_or_mint: ctx.accounts.token_mint.to_account_info(),
+        current_authority: ctx.accounts.sale.to_account_info(),
     };
 
     let seeds = [
@@ -70,14 +55,14 @@ pub fn handle_close_whitelist_sale(
 
     let cpi_ctx = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        transfer_to_buyer,
+        set_mint_authority,
     )
     .with_signer(signer_seeds);
 
-    match transfer_checked(
+    match set_authority(
         cpi_ctx,
-        ctx.accounts.vault_ata.amount,
-        ctx.accounts.token_mint.decimals,
+        anchor_spl::token::spl_token::instruction::AuthorityType::MintTokens,
+        Some(ctx.accounts.signer.key()),
     ) {
         Ok(_) => Ok(()),
         Err(e) => Err(e),

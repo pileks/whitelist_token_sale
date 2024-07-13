@@ -77,9 +77,10 @@ pub fn handle_create_whitelist_sale(
         mint: ctx.accounts.token_mint.to_account_info(),
     };
 
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-
-    let cpi_ctx = CpiContext::new(cpi_program, transfer_from_buyer);
+    let cpi_ctx = CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        transfer_from_buyer,
+    );
 
     // We treat token amounts as integers, therefore we have to multiply by 10^mint.decimals
     let amount_with_decimals: u64 =

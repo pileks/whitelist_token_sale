@@ -7,7 +7,7 @@ use anchor_lang::prelude::*;
 
 pub use instructions::*;
 
-declare_id!("EfRJk5TyimgnGU6PPikpfSByVXTj7MkdKMtezreYfwCZ");
+declare_id!("Hdi7NzaRyd8YVVsdmz9nYVFfqHHcb5x8Trer5wkyTyq9");
 
 #[program]
 pub mod whitelist_token_sale_mint {

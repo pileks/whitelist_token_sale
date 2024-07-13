@@ -10,7 +10,7 @@ use anchor_lang::{
 use anchor_safe_math::SafeMath;
 use anchor_spl::{
     associated_token::{AssociatedToken, ID as ASSOCIATED_TOKEN_PROGRAM_ID},
-    token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked, ID as TOKEN_PROGRAM_ID},
+    token::{mint_to, Mint, MintTo, Token, TokenAccount, ID as TOKEN_PROGRAM_ID},
 };
 
 #[derive(Accounts)]
@@ -30,13 +30,6 @@ pub struct BuyTokens<'info> {
     )]
     pub allowance: Account<'info, Allowance>,
 
-    #[account(
-        mut,
-        associated_token::mint=token_mint,
-        associated_token::authority=sale
-    )]
-    pub vault_ata: Account<'info, TokenAccount>,
-
     #[account(mut)]
     pub signer: Signer<'info>,
 
@@ -48,7 +41,7 @@ pub struct BuyTokens<'info> {
     )]
     pub signer_ata: Account<'info, TokenAccount>,
 
-    #[account()]
+    #[account(mut)]
     pub token_mint: Account<'info, Mint>,
 
     #[account(address=TOKEN_PROGRAM_ID)]
@@ -88,11 +81,10 @@ pub fn handle_buy_tokens(ctx: Context<BuyTokens>, sale_name: String, amount: u64
     transfer(transfer_to_vault_context, transfer_to_vault_amount)?;
 
     // Then transfer tokens to signer's ATA
-    let transfer_to_buyer = TransferChecked {
-        from: ctx.accounts.vault_ata.to_account_info(),
-        to: ctx.accounts.signer_ata.to_account_info(),
+    let mint_to_data = MintTo {
         authority: ctx.accounts.sale.to_account_info(),
         mint: ctx.accounts.token_mint.to_account_info(),
+        to: ctx.accounts.signer_ata.to_account_info(),
     };
 
     let seeds = [
@@ -102,20 +94,13 @@ pub fn handle_buy_tokens(ctx: Context<BuyTokens>, sale_name: String, amount: u64
     ];
     let signer_seeds = &[&seeds[..]];
 
-    let cpi_ctx = CpiContext::new(
-        ctx.accounts.token_program.to_account_info(),
-        transfer_to_buyer,
-    )
-    .with_signer(signer_seeds);
+    let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), mint_to_data)
+        .with_signer(signer_seeds);
 
     let amount_with_decimals: u64 =
         amount.safe_mul(10_u64.safe_pow(ctx.accounts.token_mint.decimals.into())?)?;
 
-    match transfer_checked(
-        cpi_ctx,
-        amount_with_decimals,
-        ctx.accounts.token_mint.decimals,
-    ) {
+    match mint_to(cpi_ctx, amount_with_decimals) {
         Ok(_) => Ok(()),
         Err(e) => Err(e),
     }
