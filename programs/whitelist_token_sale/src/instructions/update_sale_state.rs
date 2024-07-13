@@ -24,10 +24,7 @@ pub fn handle_update_sale_state(
     let sale = &mut ctx.accounts.sale;
     let signer = &ctx.accounts.signer;
 
-    require!(
-        sale.owner.eq(signer.key),
-        WhitelistError::OnlyOwner
-    );
+    require!(sale.owner.eq(signer.key), WhitelistError::OnlyOwner);
 
     sale.is_registration_open = is_registration_open;
     sale.is_sale_open = is_sale_open;

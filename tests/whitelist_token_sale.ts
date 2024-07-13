@@ -13,8 +13,6 @@ import {
   mintTo,
   getAccount,
   getAssociatedTokenAddress,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
   Account,
 } from "@solana/spl-token";
 import { assert } from "chai";
@@ -526,15 +524,16 @@ describe("Whitelist Token Sale - story", () => {
       })
       .signers([OWNER_KEYPAIR])
       .rpc();
-    
-      const ownerAtaAfterClose = await getOrCreateAssociatedTokenAccount(
-        provider.connection,
-        OWNER_KEYPAIR,
-        MINT_KEYPAIR.publicKey,
-        OWNER_KEYPAIR.publicKey
-      );
-      const ownerReceivedAmount = ownerAtaAfterClose.amount - ownerAtaBeforeClose.amount;
-      
-      assert.equal(ownerReceivedAmount, saleAtaBeforeClose.amount);
+
+    const ownerAtaAfterClose = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      OWNER_KEYPAIR,
+      MINT_KEYPAIR.publicKey,
+      OWNER_KEYPAIR.publicKey
+    );
+    const ownerReceivedAmount =
+      ownerAtaAfterClose.amount - ownerAtaBeforeClose.amount;
+
+    assert.equal(ownerReceivedAmount, saleAtaBeforeClose.amount);
   });
 });

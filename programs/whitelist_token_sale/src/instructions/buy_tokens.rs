@@ -95,13 +95,18 @@ pub fn handle_buy_tokens(ctx: Context<BuyTokens>, sale_name: String, amount: u64
         mint: ctx.accounts.token_mint.to_account_info(),
     };
 
-    let seeds = [PDA_SEED_SALE.as_ref(), sale_name.as_bytes(), &[ctx.bumps.sale]];
+    let seeds = [
+        PDA_SEED_SALE.as_ref(),
+        sale_name.as_bytes(),
+        &[ctx.bumps.sale],
+    ];
     let signer_seeds = &[&seeds[..]];
 
     let cpi_ctx = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
         transfer_to_buyer,
-    ).with_signer(signer_seeds);
+    )
+    .with_signer(signer_seeds);
 
     let amount_with_decimals: u64 =
         amount.safe_mul(10_u64.safe_pow(ctx.accounts.token_mint.decimals.into())?)?;
