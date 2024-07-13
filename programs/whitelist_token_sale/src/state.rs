@@ -7,6 +7,7 @@ pub struct WhitelistSale {
     pub lamports_per_token: u64,
     pub max_tokens_per_buyer: u64,
     pub max_buyers: u64,
+    pub num_buyers: u64,
     pub is_registration_open: bool,
     pub is_sale_open: bool,
 }

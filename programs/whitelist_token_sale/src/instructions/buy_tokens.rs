@@ -60,7 +60,7 @@ pub struct BuyTokens<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_buy_tokens(ctx: Context<BuyTokens>, _sale_name: String, amount: u64) -> Result<()> {
+pub fn handle_buy_tokens(ctx: Context<BuyTokens>, sale_name: String, amount: u64) -> Result<()> {
     let sale = &ctx.accounts.sale;
 
     require!(sale.is_sale_open, WhitelistError::SaleClosed);
@@ -95,7 +95,7 @@ pub fn handle_buy_tokens(ctx: Context<BuyTokens>, _sale_name: String, amount: u6
         mint: ctx.accounts.token_mint.to_account_info(),
     };
 
-    let seeds = &[PDA_SEED_SALE.as_ref(), _sale_name.as_bytes(), &[ctx.bumps.sale]];
+    let seeds = [PDA_SEED_SALE.as_ref(), sale_name.as_bytes(), &[ctx.bumps.sale]];
     let signer_seeds = &[&seeds[..]];
 
     let cpi_ctx = CpiContext::new(

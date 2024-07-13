@@ -10,6 +10,7 @@ use std::mem::size_of;
 #[instruction(sale_name: String)]
 pub struct RegisterForWhitelist<'info> {
     #[account(
+        mut,
         seeds=[PDA_SEED_SALE.as_ref(), sale_name.as_bytes()],
         bump
     )]
@@ -34,16 +35,23 @@ pub fn handle_register_for_whitelist(
     ctx: Context<RegisterForWhitelist>,
     _sale_name: String,
 ) -> Result<()> {
-    let sale = &ctx.accounts.sale;
+    let sale = &mut ctx.accounts.sale;
 
     require!(
         sale.is_registration_open,
         WhitelistError::WhitelistRegistrationClosed
     );
 
+    require!(
+        sale.num_buyers <= sale.max_buyers,
+        WhitelistError::BuyerLimitReached
+    );
+
     let allowance = &mut ctx.accounts.allowance;
 
     allowance.tokens_bought = 0;
+
+    sale.num_buyers += 1;
 
     Ok(())
 }

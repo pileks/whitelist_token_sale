@@ -11,5 +11,7 @@ pub enum WhitelistError {
     #[msg("Token purchase is larger than remaining allowance")]
     AllowanceExceeded,
     #[msg("Mismatch in mints of provided accounts")]
-    MintMismatch
+    MintMismatch,
+    #[msg("The maximum number of registered buyers has been reached")]
+    BuyerLimitReached,
 }

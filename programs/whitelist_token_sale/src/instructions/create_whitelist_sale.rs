@@ -67,6 +67,7 @@ pub fn handle_create_whitelist_sale(
     sale.max_buyers = max_buyers;
     sale.is_registration_open = true;
     sale.is_sale_open = false;
+    sale.num_buyers = 0;
 
     // Transfer funds into vault
     let transfer_from_buyer = TransferChecked {
