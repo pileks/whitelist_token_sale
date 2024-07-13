@@ -81,10 +81,10 @@ pub fn handle_create_whitelist_sale(
     let cpi_ctx = CpiContext::new(cpi_program, transfer_from_buyer);
 
     // We treat token amounts as integers, therefore we have to multiply by 10^mint.decimals
-    let amount: u64 =
+    let amount_with_decimals: u64 =
         sale_total_amount.safe_mul(10_u64.safe_pow(ctx.accounts.token_mint.decimals.into())?)?;
 
-    match transfer_checked(cpi_ctx, amount, ctx.accounts.token_mint.decimals) {
+    match transfer_checked(cpi_ctx, amount_with_decimals, ctx.accounts.token_mint.decimals) {
         Ok(_) => Ok(()),
         Err(e) => Err(e),
     }

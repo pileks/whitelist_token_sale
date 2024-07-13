@@ -35,6 +35,8 @@ describe("Whitelist Token Sale - story", () => {
 
   const SALE_NAME = "a token sale";
   const SALE_PRICE_PER_TOKEN_LAMPORTS = new BN(LAMPORTS_PER_SOL / 100); // 1 token = 0.01 SOL
+  const SALE_MAX_BUYERS = new BN(10);
+  const SALE_MAX_TOKENS_PER_BUYER = new BN(1000);
 
   // Actors in our tests
   const MINT_KEYPAIR = Keypair.generate();
@@ -169,8 +171,8 @@ describe("Whitelist Token Sale - story", () => {
       .createWhitelistSale(
         SALE_NAME,
         SALE_PRICE_PER_TOKEN_LAMPORTS,
-        new BN(1000),
-        new BN(10)
+        SALE_MAX_TOKENS_PER_BUYER,
+        SALE_MAX_BUYERS
       )
       .accounts({
         signer: OWNER_KEYPAIR.publicKey,
@@ -187,6 +189,19 @@ describe("Whitelist Token Sale - story", () => {
     // Assert that a created sale has its registration open and its sale closed
     assert.isTrue(saleState.isRegistrationOpen);
     assert.isFalse(saleState.isSaleOpen);
+
+    // Assert that the correct amount is in the ATA
+    const saleStateAta = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      OWNER_KEYPAIR,
+      MINT_KEYPAIR.publicKey,
+      saleStateAddress,
+      true
+    );
+    const expectedAmount = SALE_MAX_TOKENS_PER_BUYER.mul(SALE_MAX_BUYERS).mul(
+      new BN(Math.pow(10, DECIMALS))
+    );
+    assert.isTrue(expectedAmount.eq(new BN(saleStateAta.amount.toString())));
   });
 
   it("should allow a buyer to register on whitelist while registration is open", async () => {
@@ -202,9 +217,7 @@ describe("Whitelist Token Sale - story", () => {
       SALE_NAME,
       BUYER_KEYPAIR_1.publicKey
     );
-    const allowance = await program.account.allowance.fetch(
-      allowanceAddress
-    );
+    const allowance = await program.account.allowance.fetch(allowanceAddress);
 
     assert.equal(allowance.tokensBought.cmp(new BN(0)), 0);
   });
@@ -265,6 +278,31 @@ describe("Whitelist Token Sale - story", () => {
     assert.isFalse(saleState.isSaleOpen);
   });
 
+  it("should disallow whitelisted buyer to purchase tokens before sale is open", async () => {
+    const buyAmount = new BN(10);
+
+    await program.methods
+      .buyTokens(SALE_NAME, buyAmount)
+      .accounts({
+        signer: BUYER_KEYPAIR_1.publicKey,
+        tokenMint: MINT_KEYPAIR.publicKey,
+      })
+      .signers([BUYER_KEYPAIR_1])
+      .rpc()
+      .then(
+        () => {
+          assert.fail("Whitelisted buyer should not be able to buy before token sale is open!");
+        },
+        (e: SendTransactionError) => {
+          assert.ok(
+            e.logs.some((log) =>
+              log.includes("Whiteliste sale is closed")
+            )
+          );
+        }
+      );
+  });
+
   it("should allow owner to enable/disable whitelisting and buying", async () => {
     await program.methods
       .updateSaleState(SALE_NAME, false, true)
@@ -281,6 +319,32 @@ describe("Whitelist Token Sale - story", () => {
 
     assert.isFalse(saleState.isRegistrationOpen);
     assert.isTrue(saleState.isSaleOpen);
+  });
+
+  it("should allow whitelisted buyer to purchase tokens once sale is open", async () => {
+    const buyAmount = new BN(10);
+
+    await program.methods
+      .buyTokens(SALE_NAME, buyAmount)
+      .accounts({
+        signer: BUYER_KEYPAIR_1.publicKey,
+        tokenMint: MINT_KEYPAIR.publicKey,
+      })
+      .signers([BUYER_KEYPAIR_1])
+      .rpc();
+
+    const signerAtaAddress = await getAssociatedTokenAddress(
+      MINT_KEYPAIR.publicKey,
+      BUYER_KEYPAIR_1.publicKey
+    );
+    const signerAta = await getAccount(provider.connection, signerAtaAddress);
+
+    assert.isTrue(
+      new BN(signerAta.amount.toString()).eq(
+        buyAmount.mul(new BN(Math.pow(10, DECIMALS)))
+      ),
+      `Singer's ATA amount is ${signerAta.amount}, while it should be ${buyAmount}`
+    );
   });
 
   it("should disallow a buyer to register on whitelist while registration is closed", async () => {
