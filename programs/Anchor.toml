@@ -5,8 +5,12 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-whitelist_token_sale_vault = "EfRJk5TyimgnGU6PPikpfSByVXTj7MkdKMtezreYfwCZ"
-whitelist_token_sale_mint = "Hdi7NzaRyd8YVVsdmz9nYVFfqHHcb5x8Trer5wkyTyq9"
+whitelist_token_sale_mint = "BiHgbT5QViTwpY658qAcgcTNuPYo2UZr2sjTwTF9JdbX"
+whitelist_token_sale_vault = "4KSUrirLpTrGMmgKNCcXtv7wsJ2kdfPTZJdtU4k4ABHs"
+
+[programs.devnet]
+whitelist_token_sale_mint = "BiHgbT5QViTwpY658qAcgcTNuPYo2UZr2sjTwTF9JdbX"
+whitelist_token_sale_vault = "4KSUrirLpTrGMmgKNCcXtv7wsJ2kdfPTZJdtU4k4ABHs"
 
 [registry]
 url = "https://api.apr.dev"
