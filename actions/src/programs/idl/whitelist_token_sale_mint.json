@@ -548,6 +548,10 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
             "name": "owner",
             "type": "pubkey"
           },

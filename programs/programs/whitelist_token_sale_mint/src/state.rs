@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 #[account]
 pub struct WhitelistSale {
-    // pub token_mint: Pubkey,
+    pub token_mint: Pubkey,
     pub owner: Pubkey,
     pub lamports_per_token: u64,
     pub max_tokens_per_buyer: u64,

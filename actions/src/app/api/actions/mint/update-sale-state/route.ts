@@ -9,22 +9,19 @@ import {
   getUrlWithRequestOrigin,
   jsonBadResult,
   jsonResponseWithHeaders,
+  parseTextBoolean,
 } from "@/shared/utils";
-import { BN } from "@coral-xyz/anchor";
 import {
   ActionGetResponse,
   ActionPostRequest,
-  ACTIONS_CORS_HEADERS,
   createPostResponse,
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
 const createMintActionParamsDefinition = {
-  mint: { label: "Token mint", required: true },
   saleName: { label: "Sale name", required: true },
-  lamportsPerToken: { label: "Price of 1 token in lamports", required: true },
-  maxTokensPerBuyer: { label: "Maximum tokens per buyer", required: true },
-  maxBuyers: { label: "Maximum number of buyers", required: true },
+  isRegistrationOpen: { label: "Registration open? (yes/no)", required: true },
+  isSaleOpen: { label: "Sale open? (yes/no)", required: true },
 };
 
 const params = getActionParametersFromDefinition(
@@ -34,16 +31,16 @@ const params = getActionParametersFromDefinition(
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getUrlWithRequestOrigin("/action-icon.svg", req),
-    label: "Create whitelist sale (mint)",
+    label: "Update sale state (mint)",
     description:
-      "Use this action to create a whitelist token sale in which the program will have mint authority until the sale is closed.",
+      "Use this action to set the status of a whitelist token sale. You can set both whether users can register for the whitelist, and whether they can start buying the tokens. Only usable by the sale creator.",
     title: "Create whitelist sale (mint version)",
     links: {
       actions: [
         {
           label: "Create whitelist sale (mint)",
           href: getUrlWithRequestOrigin(
-            getActionQuery(actionUrls.mint.createWhitelist, params),
+            getActionQuery(actionUrls.mint.updateSaleState, params),
             req
           ),
           parameters: params,
@@ -65,26 +62,41 @@ export const POST = async (req: Request) => {
     );
 
     if (!paramsResult.ok) {
-      return jsonBadResult(`Missing parameter: ${paramsResult.error.paramName}`);
+      return jsonBadResult(
+        `Missing parameter: ${paramsResult.error.paramName}`
+      );
     }
 
-    const { mint, lamportsPerToken, maxBuyers, maxTokensPerBuyer, saleName } =
-      paramsResult.value;
+    const { saleName, isRegistrationOpen, isSaleOpen } = paramsResult.value;
+
+    const registrationOpenResult = parseTextBoolean(isRegistrationOpen);
+
+    if (!registrationOpenResult.ok) {
+      return jsonBadResult(
+        `"Registration open?" could not be parsed. Use "yes" or "no.`
+      );
+    }
+
+    const saleOpenResult = parseTextBoolean(isSaleOpen);
+
+    if (!saleOpenResult.ok) {
+      return jsonBadResult(
+        `"Sale open?" could not be parsed. Use "yes" or "no.`
+      );
+    }
 
     const body: ActionPostRequest = await req.json();
     const signer = new PublicKey(body.account);
-    const mintAddr = new PublicKey(mint);
 
     const { program, connection } = getMintProgram();
 
     const instruction = await program.methods
-      .createWhitelistSale(
+      .updateSaleState(
         saleName,
-        new BN(lamportsPerToken),
-        new BN(maxTokensPerBuyer),
-        new BN(maxBuyers)
+        registrationOpenResult.value,
+        saleOpenResult.value
       )
-      .accounts({ signer, tokenMint: mintAddr })
+      .accounts({ signer })
       .instruction();
 
     const transaction = new Transaction();
@@ -98,12 +110,14 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Create a whitelist sale with token mint ${mint}. This will transfer mint authority to the program until the sale is closed.`,
+        message: `Set the status of whitelist sale named "${saleName}". Its whitelist will be ${
+          registrationOpenResult.value ? "open" : "closed"
+        } and its sale will be ${saleOpenResult.value ? "open" : "closed"}.`,
       },
     });
 
     return jsonResponseWithHeaders(payload);
   } catch (e) {
-    return Response.json("An unknown error occured", { status: 400 });
+    return jsonBadResult("An unknown error occured");
   }
 };

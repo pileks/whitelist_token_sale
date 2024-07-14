@@ -1,4 +1,5 @@
 import { ActionParameter, ACTIONS_CORS_HEADERS } from "@solana/actions";
+import { Result, resultErr, resultOk } from "./result";
 
 export function getUrlWithRequestOrigin(url: string, req: Request) {
   return new URL(url, new URL(req.url).origin).toString();
@@ -34,4 +35,29 @@ export function getDialToUrlForAction(url: string) {
   }
 
   return `https://dial.to/${cluster}?action=solana-action:${url}`
+}
+
+export function parseTextBoolean(input: string): Result<boolean, string> {
+  const yesValues = ["yes", "y", "true", "1"];
+  const noValues = ["no", "n", "false", "0"];
+
+  if(yesValues.some(v => input.toLowerCase() === v.toLowerCase())) {
+    return resultOk(true);
+  } else if(noValues.some(v => input.toLowerCase() === v.toLowerCase())) {
+    return resultOk(false);
+  }
+
+  return resultErr("Could not parse yes/no value from input.");
+}
+
+export function jsonBadResult(message: string) {
+  return Response.json(
+    {
+      message: message,
+    },
+    {
+      status: 400,
+      headers: ACTIONS_CORS_HEADERS,
+    }
+  );
 }

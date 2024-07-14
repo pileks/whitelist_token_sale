@@ -61,6 +61,7 @@ pub fn handle_create_whitelist_sale(
     // Set sale account fields
     let sale = &mut ctx.accounts.sale;
 
+    sale.token_mint = ctx.accounts.token_mint.key();
     sale.owner = ctx.accounts.signer.key.key();
     sale.lamports_per_token = lamports_per_token;
     sale.max_tokens_per_buyer = max_tokens_per_buyer;

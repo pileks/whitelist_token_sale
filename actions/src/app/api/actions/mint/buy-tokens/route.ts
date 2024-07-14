@@ -1,3 +1,4 @@
+import { getMintSaleStateAddress } from "@/programs/accounts";
 import { getMintProgram } from "@/programs/programs";
 import {
   getActionParametersFromDefinition,
@@ -7,7 +8,6 @@ import { actionUrls } from "@/shared/actionUrls";
 import {
   getActionQuery,
   getUrlWithRequestOrigin,
-  jsonBadResult,
   jsonResponseWithHeaders,
 } from "@/shared/utils";
 import { BN } from "@coral-xyz/anchor";
@@ -19,16 +19,13 @@ import {
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const createMintActionParamsDefinition = {
-  mint: { label: "Token mint", required: true },
+const buyTokensMintActionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
-  lamportsPerToken: { label: "Price of 1 token in lamports", required: true },
-  maxTokensPerBuyer: { label: "Maximum tokens per buyer", required: true },
-  maxBuyers: { label: "Maximum number of buyers", required: true },
+  amount: { label: "Amount of tokens to buy", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  createMintActionParamsDefinition
+  buyTokensMintActionParamsDefinition
 );
 
 export const GET = (req: Request) => {
@@ -61,30 +58,36 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      createMintActionParamsDefinition
+      buyTokensMintActionParamsDefinition
     );
 
     if (!paramsResult.ok) {
-      return jsonBadResult(`Missing parameter: ${paramsResult.error.paramName}`);
+      return Response.json(
+        {
+          message: `Missing parameter: ${paramsResult.error.paramName}`,
+        },
+        {
+          status: 400,
+          headers: ACTIONS_CORS_HEADERS,
+        }
+      );
     }
 
-    const { mint, lamportsPerToken, maxBuyers, maxTokensPerBuyer, saleName } =
-      paramsResult.value;
+    const { amount, saleName } = paramsResult.value;
 
     const body: ActionPostRequest = await req.json();
     const signer = new PublicKey(body.account);
-    const mintAddr = new PublicKey(mint);
 
     const { program, connection } = getMintProgram();
 
+    const salePdaAddress = getMintSaleStateAddress(saleName, program);
+    const salePda = await program.account.whitelistSale.fetch(salePdaAddress);
+
+    const mint = salePda.tokenMint;
+
     const instruction = await program.methods
-      .createWhitelistSale(
-        saleName,
-        new BN(lamportsPerToken),
-        new BN(maxTokensPerBuyer),
-        new BN(maxBuyers)
-      )
-      .accounts({ signer, tokenMint: mintAddr })
+      .buyTokens(saleName, new BN(amount))
+      .accounts({ signer, tokenMint: mint })
       .instruction();
 
     const transaction = new Transaction();

@@ -1001,6 +1001,10 @@ export type WhitelistTokenSaleVault = {
         "kind": "struct",
         "fields": [
           {
+            "name": "tokenMint",
+            "type": "pubkey"
+          },
+          {
             "name": "owner",
             "type": "pubkey"
           },
