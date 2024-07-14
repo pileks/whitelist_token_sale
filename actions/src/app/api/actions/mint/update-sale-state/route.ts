@@ -5,6 +5,7 @@ import {
 } from "@/shared/action-parameters";
 import { actionUrls } from "@/shared/actionUrls";
 import {
+  getActionImageUrl,
   getActionQuery,
   getUrlWithRequestOrigin,
   jsonBadResult,
@@ -30,7 +31,7 @@ const params = getActionParametersFromDefinition(
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
-    icon: getUrlWithRequestOrigin("/action-icon.svg", req),
+    icon: getActionImageUrl(req),
     label: "Update sale state (mint)",
     description:
       "Use this action to set the status of a whitelist token sale. You can set both whether users can register for the whitelist, and whether they can start buying the tokens. Only usable by the sale creator.",

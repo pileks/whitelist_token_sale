@@ -6,6 +6,7 @@ import {
 } from "@/shared/action-parameters";
 import { actionUrls } from "@/shared/actionUrls";
 import {
+  getActionImageUrl,
   getActionQuery,
   getUrlWithRequestOrigin,
   jsonBadResult,
@@ -28,7 +29,7 @@ const params = getActionParametersFromDefinition(
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
-    icon: getUrlWithRequestOrigin("/action-icon.svg", req),
+    icon: getActionImageUrl(req),
     label: "Close whitelist sale (mint)",
     description:
       "Use this action to close the whitelist token sale you created. You will then receive mint authority back from the program.",

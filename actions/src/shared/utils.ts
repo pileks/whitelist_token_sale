@@ -61,3 +61,7 @@ export function jsonBadResult(message: string) {
     }
   );
 }
+
+export function getActionImageUrl(req: Request){
+  return getUrlWithRequestOrigin("/action-image.png", req);
+}

@@ -6,6 +6,7 @@ import {
 } from "@/shared/action-parameters";
 import { actionUrls } from "@/shared/actionUrls";
 import {
+  getActionImageUrl,
   getActionQuery,
   getUrlWithRequestOrigin,
   jsonResponseWithHeaders,
@@ -30,7 +31,7 @@ const params = getActionParametersFromDefinition(
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
-    icon: getUrlWithRequestOrigin("/action-icon.svg", req),
+    icon: getActionImageUrl(req),
     label: "Buy tokens from sale (mint)",
     description:
       "Use this action to buy tokens from a sale you are whitelisted on.",
