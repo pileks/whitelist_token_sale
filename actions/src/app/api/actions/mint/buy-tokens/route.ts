@@ -1,5 +1,5 @@
 import { getMintSaleStateAddress } from "@/programs/accounts";
-import { getMintProgram } from "@/programs/programs";
+import { getMintSaleProgram } from "@/programs/programs";
 import {
   getActionParametersFromDefinition,
   getActionParametersFromRequest,
@@ -31,16 +31,16 @@ const params = getActionParametersFromDefinition(
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getUrlWithRequestOrigin("/action-icon.svg", req),
-    label: "Create whitelist sale (mint)",
+    label: "Buy tokens from sale (mint)",
     description:
-      "Use this action to create a whitelist token sale in which the program will have mint authority until the sale is closed.",
-    title: "Create whitelist sale (mint version)",
+      "Use this action to buy tokens from a sale you are whitelisted on.",
+    title: "Buy tokens from sale (mint version)",
     links: {
       actions: [
         {
-          label: "Create whitelist sale (mint)",
+          label: "Buy tokens from sale (mint)",
           href: getUrlWithRequestOrigin(
-            getActionQuery(actionUrls.mint.createWhitelist, params),
+            getActionQuery(actionUrls.mint.buyTokens, params),
             req
           ),
           parameters: params,
@@ -78,7 +78,7 @@ export const POST = async (req: Request) => {
     const body: ActionPostRequest = await req.json();
     const signer = new PublicKey(body.account);
 
-    const { program, connection } = getMintProgram();
+    const { program, connection } = getMintSaleProgram();
 
     const salePdaAddress = getMintSaleStateAddress(saleName, program);
     const salePda = await program.account.whitelistSale.fetch(salePdaAddress);

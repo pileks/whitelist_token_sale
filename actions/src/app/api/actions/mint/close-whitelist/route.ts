@@ -18,27 +18,27 @@ import {
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const closeMintActionParamsDefinition = {
+const closeWhitelistMintActionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  closeMintActionParamsDefinition
+  closeWhitelistMintActionParamsDefinition
 );
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getUrlWithRequestOrigin("/action-icon.svg", req),
-    label: "Close whitelist sale (mint)",
+    label: "Close whitelist (mint)",
     description:
-      "Use this action to close the whitelist token sale you created. You will then receive mint authority back from the program.",
-    title: "Close whitelist sale (mint version)",
+      "Use this action to disallow users to register for your whitelist. Only usable by the sale creator.",
+    title: "Close whitelist (mint version)",
     links: {
       actions: [
         {
-          label: "Create whitelist sale (mint)",
+          label: "Close whitelist (mint)",
           href: getUrlWithRequestOrigin(
-            getActionQuery(actionUrls.mint.createWhitelist, params),
+            getActionQuery(actionUrls.mint.closeWhitelist, params),
             req
           ),
           parameters: params,
@@ -56,15 +56,16 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      closeMintActionParamsDefinition
+      closeWhitelistMintActionParamsDefinition
     );
 
     if (!paramsResult.ok) {
-      return jsonBadResult(`Missing parameter: ${paramsResult.error.paramName}`);
+      return jsonBadResult(
+        `Missing parameter: ${paramsResult.error.paramName}`
+      );
     }
 
-    const { saleName } =
-      paramsResult.value;
+    const { saleName } = paramsResult.value;
 
     const body: ActionPostRequest = await req.json();
     const signer = new PublicKey(body.account);
@@ -74,13 +75,13 @@ export const POST = async (req: Request) => {
     const salePdaAddress = getMintSaleStateAddress(saleName, program);
     const salePda = await program.account.whitelistSale.fetch(salePdaAddress);
 
-    const mint = salePda.tokenMint;
-    
     const instruction = await program.methods
-      .closeWhitelistSale(
-        saleName
+      .updateSaleState(
+        saleName,
+        false,
+        salePda.isSaleOpen
       )
-      .accounts({ signer, tokenMint: mint })
+      .accounts({ signer })
       .instruction();
 
     const transaction = new Transaction();
@@ -94,12 +95,12 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Close the whitelist token sale named ${saleName} you created and receive mint authority back from the program.`,
+        message: `Close whitelist registration for sale named "${saleName}".`,
       },
     });
 
     return jsonResponseWithHeaders(payload);
   } catch (e) {
-    return Response.json("An unknown error occured", { status: 400 });
+    return jsonBadResult("An unknown error occured");
   }
 };

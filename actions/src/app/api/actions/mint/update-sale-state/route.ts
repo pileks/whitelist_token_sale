@@ -1,4 +1,4 @@
-import { getMintProgram } from "@/programs/programs";
+import { getMintSaleProgram } from "@/programs/programs";
 import {
   getActionParametersFromDefinition,
   getActionParametersFromRequest,
@@ -88,7 +88,7 @@ export const POST = async (req: Request) => {
     const body: ActionPostRequest = await req.json();
     const signer = new PublicKey(body.account);
 
-    const { program, connection } = getMintProgram();
+    const { program, connection } = getMintSaleProgram();
 
     const instruction = await program.methods
       .updateSaleState(

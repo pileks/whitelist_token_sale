@@ -1,4 +1,4 @@
-import { getMintProgram } from "@/programs/programs";
+import { getMintSaleProgram } from "@/programs/programs";
 import {
   getActionParametersFromDefinition,
   getActionParametersFromRequest,
@@ -75,7 +75,7 @@ export const POST = async (req: Request) => {
     const signer = new PublicKey(body.account);
     const mintAddr = new PublicKey(mint);
 
-    const { program, connection } = getMintProgram();
+    const { program, connection } = getMintSaleProgram();
 
     const instruction = await program.methods
       .createWhitelistSale(
