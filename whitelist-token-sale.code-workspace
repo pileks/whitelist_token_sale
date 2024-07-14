@@ -1,0 +1,7 @@
+{
+  "folders": [
+    { "path": "actions", "name": "actions" },
+    { "path": "programs", "name": "programs" },
+    { "path": ".", "name": "root" }
+  ]
+}
