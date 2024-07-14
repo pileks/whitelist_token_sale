@@ -32,14 +32,14 @@ const params = getActionParametersFromDefinition(
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getActionImageUrl(req),
-    label: "Update sale state (mint)",
+    label: "Update sale state",
     description:
       "Use this action to set the status of a whitelist token sale. You can set both whether users can register for the whitelist, and whether they can start buying the tokens. Only usable by the sale creator.",
     title: "Create whitelist sale (mint version)",
     links: {
       actions: [
         {
-          label: "Create whitelist sale (mint)",
+          label: "Create whitelist sale",
           href: getUrlWithRequestOrigin(
             getActionQuery(actionUrls.mint.updateSaleState, params),
             req
@@ -111,9 +111,9 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Set the status of whitelist sale named "${saleName}". Its whitelist will be ${
+        message: `Set the status of whitelist sale named "${saleName}". Its whitelist is ${
           registrationOpenResult.value ? "open" : "closed"
-        } and its sale will be ${saleOpenResult.value ? "open" : "closed"}.`,
+        } and its sale is ${saleOpenResult.value ? "open" : "closed"}.`,
       },
     });
 

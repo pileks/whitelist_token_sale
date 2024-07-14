@@ -30,14 +30,14 @@ const params = getActionParametersFromDefinition(
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getActionImageUrl(req),
-    label: "Close whitelist (mint)",
+    label: "Close whitelist",
     description:
       "Use this action to disallow users to register for your whitelist. Only usable by the sale creator.",
-    title: "Close whitelist (mint version)",
+    title: "Close whitelist registration (mint version)",
     links: {
       actions: [
         {
-          label: "Close whitelist (mint)",
+          label: "Close whitelist",
           href: getUrlWithRequestOrigin(
             getActionQuery(actionUrls.mint.closeWhitelist, params),
             req
@@ -96,7 +96,7 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Close whitelist registration for sale named "${saleName}".`,
+        message: `You have closed whitelist registration for sale named "${saleName}".`,
       },
     });
 

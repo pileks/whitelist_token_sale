@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/whitelist_token_sale_mint.json`.
  */
 export type WhitelistTokenSaleMint = {
-  "address": "Hdi7NzaRyd8YVVsdmz9nYVFfqHHcb5x8Trer5wkyTyq9",
+  "address": "BiHgbT5QViTwpY658qAcgcTNuPYo2UZr2sjTwTF9JdbX",
   "metadata": {
     "name": "whitelistTokenSaleMint",
     "version": "0.1.0",

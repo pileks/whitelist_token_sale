@@ -15,12 +15,11 @@ import { BN } from "@coral-xyz/anchor";
 import {
   ActionGetResponse,
   ActionPostRequest,
-  ACTIONS_CORS_HEADERS,
   createPostResponse,
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const createMintActionParamsDefinition = {
+const createWhitelistSaleMintActionParamsDefinition = {
   mint: { label: "Token mint", required: true },
   saleName: { label: "Sale name", required: true },
   lamportsPerToken: { label: "Price of 1 token in lamports", required: true },
@@ -29,20 +28,20 @@ const createMintActionParamsDefinition = {
 };
 
 const params = getActionParametersFromDefinition(
-  createMintActionParamsDefinition
+  createWhitelistSaleMintActionParamsDefinition
 );
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getActionImageUrl(req),
-    label: "Create whitelist sale (mint)",
+    label: "Create whitelist sale",
     description:
       "Use this action to create a whitelist token sale in which the program will have mint authority until the sale is closed.",
     title: "Create whitelist sale (mint version)",
     links: {
       actions: [
         {
-          label: "Create whitelist sale (mint)",
+          label: "Create whitelist sale",
           href: getUrlWithRequestOrigin(
             getActionQuery(actionUrls.mint.createWhitelist, params),
             req
@@ -62,7 +61,7 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      createMintActionParamsDefinition
+      createWhitelistSaleMintActionParamsDefinition
     );
 
     if (!paramsResult.ok) {
@@ -99,7 +98,7 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Create a whitelist sale with token mint ${mint}. This will transfer mint authority to the program until the sale is closed.`,
+        message: `Created a whitelist sale with token mint ${mint}.Mint authority has been transferred to the program until the sale is closed.`,
       },
     });
 

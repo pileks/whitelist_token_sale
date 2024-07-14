@@ -30,13 +30,13 @@ const params = getActionParametersFromDefinition(
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getActionImageUrl(req),
-    label: "Register for whitelist (mint)",
+    label: "Register for whitelist",
     description: "Use this action to register for a whitelist token sale.",
     title: "Register for whitelist (mint version)",
     links: {
       actions: [
         {
-          label: "Register for whitelist (mint)",
+          label: "Register for whitelist",
           href: getUrlWithRequestOrigin(
             getActionQuery(actionUrls.mint.registerForWhitelist, params),
             req
@@ -86,7 +86,7 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Register for whitelist on sale named ${saleName}.`,
+        message: `You are registered for whitelist on sale named ${saleName}.`,
       },
     });
 

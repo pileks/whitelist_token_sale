@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/whitelist_token_sale_vault.json`.
  */
 export type WhitelistTokenSaleVault = {
-  "address": "EfRJk5TyimgnGU6PPikpfSByVXTj7MkdKMtezreYfwCZ",
+  "address": "4KSUrirLpTrGMmgKNCcXtv7wsJ2kdfPTZJdtU4k4ABHs",
   "metadata": {
     "name": "whitelistTokenSaleVault",
     "version": "0.1.0",

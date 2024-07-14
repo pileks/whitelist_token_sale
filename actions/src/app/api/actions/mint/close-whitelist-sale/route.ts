@@ -19,27 +19,27 @@ import {
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const closeMintActionParamsDefinition = {
+const closeWhitelistSaleMintActionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  closeMintActionParamsDefinition
+  closeWhitelistSaleMintActionParamsDefinition
 );
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getActionImageUrl(req),
-    label: "Close whitelist sale (mint)",
+    label: "Close whitelist sale",
     description:
       "Use this action to close the whitelist token sale you created. You will then receive mint authority back from the program.",
     title: "Close whitelist sale (mint version)",
     links: {
       actions: [
         {
-          label: "Create whitelist sale (mint)",
+          label: "Close whitelist sale",
           href: getUrlWithRequestOrigin(
-            getActionQuery(actionUrls.mint.createWhitelist, params),
+            getActionQuery(actionUrls.mint.closeWhitelistSale, params),
             req
           ),
           parameters: params,
@@ -57,7 +57,7 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      closeMintActionParamsDefinition
+      closeWhitelistSaleMintActionParamsDefinition
     );
 
     if (!paramsResult.ok) {
@@ -79,7 +79,7 @@ export const POST = async (req: Request) => {
     
     const instruction = await program.methods
       .closeWhitelistSale(
-        saleName
+        saleName,
       )
       .accounts({ signer, tokenMint: mint })
       .instruction();
@@ -95,7 +95,7 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Close the whitelist token sale named ${saleName} you created and receive mint authority back from the program.`,
+        message: `Whitelist token sale named ${saleName} successfully closed! You have received mint authority back from the program.`,
       },
     });
 

@@ -32,14 +32,14 @@ const params = getActionParametersFromDefinition(
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getActionImageUrl(req),
-    label: "Buy tokens from sale (mint)",
+    label: "Buy tokens from sale",
     description:
       "Use this action to buy tokens from a sale you are whitelisted on.",
     title: "Buy tokens from sale (mint version)",
     links: {
       actions: [
         {
-          label: "Buy tokens from sale (mint)",
+          label: "Buy tokens from sale",
           href: getUrlWithRequestOrigin(
             getActionQuery(actionUrls.mint.buyTokens, params),
             req
@@ -102,7 +102,7 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Create a whitelist sale with token mint ${mint}. This will transfer mint authority to the program until the sale is closed.`,
+        message: `You successfully bought ${amount} tokens!`,
       },
     });
 
