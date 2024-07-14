@@ -147,3 +147,9 @@ These actions can be called by anyone.
   * Transfers SOL from the user's wallet to the Sale PDA
   * **(Mint version)** Mints tokens directly into the user's wallet
   * **(Vault version)** Transfers tokens from the Sale PDA into the user's wallet
+
+### Development tidbits
+
+[`actions/src/shared/action-parameters.ts`](./actions/src/shared/action-parameters.ts) contains code that allows developers to reduce boilerplate around action parameters.
+
+It does this by providing a simple UX to define a set of action parameters and it can then create a list of them by using `getActionParametersFromDefinition`. Additionally, it can parse parameters and provide a `Result`-like experience while doing so through `getActionParametersFromRequest`.
