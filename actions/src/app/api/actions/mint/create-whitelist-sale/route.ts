@@ -19,7 +19,7 @@ import {
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const createWhitelistSaleMintActionParamsDefinition = {
+const actionParamsDefinition = {
   mint: { label: "Token mint", required: true },
   saleName: { label: "Sale name", required: true },
   lamportsPerToken: { label: "Price of 1 token in lamports", required: true },
@@ -28,7 +28,7 @@ const createWhitelistSaleMintActionParamsDefinition = {
 };
 
 const params = getActionParametersFromDefinition(
-  createWhitelistSaleMintActionParamsDefinition
+  actionParamsDefinition
 );
 
 export const GET = (req: Request) => {
@@ -61,7 +61,7 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      createWhitelistSaleMintActionParamsDefinition
+      actionParamsDefinition
     );
 
     if (!paramsResult.ok) {

@@ -19,14 +19,14 @@ import {
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const createMintActionParamsDefinition = {
+const actionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
   isRegistrationOpen: { label: "Registration open? (yes/no)", required: true },
   isSaleOpen: { label: "Sale open? (yes/no)", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  createMintActionParamsDefinition
+  actionParamsDefinition
 );
 
 export const GET = (req: Request) => {
@@ -59,7 +59,7 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      createMintActionParamsDefinition
+      actionParamsDefinition
     );
 
     if (!paramsResult.ok) {

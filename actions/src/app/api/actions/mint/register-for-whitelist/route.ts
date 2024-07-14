@@ -14,17 +14,16 @@ import {
 import {
   ActionGetResponse,
   ActionPostRequest,
-  ACTIONS_CORS_HEADERS,
   createPostResponse,
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const createMintActionParamsDefinition = {
+const actionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  createMintActionParamsDefinition
+  actionParamsDefinition
 );
 
 export const GET = (req: Request) => {
@@ -56,7 +55,7 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      createMintActionParamsDefinition
+      actionParamsDefinition
     );
 
     if (!paramsResult.ok) {

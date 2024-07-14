@@ -19,12 +19,12 @@ import {
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const closeWhitelistMintActionParamsDefinition = {
+const actionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  closeWhitelistMintActionParamsDefinition
+  actionParamsDefinition
 );
 
 export const GET = (req: Request) => {
@@ -57,7 +57,7 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      closeWhitelistMintActionParamsDefinition
+      actionParamsDefinition
     );
 
     if (!paramsResult.ok) {

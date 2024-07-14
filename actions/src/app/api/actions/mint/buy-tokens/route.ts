@@ -9,24 +9,24 @@ import {
   getActionImageUrl,
   getActionQuery,
   getUrlWithRequestOrigin,
+  jsonBadResult,
   jsonResponseWithHeaders,
 } from "@/shared/utils";
 import { BN } from "@coral-xyz/anchor";
 import {
   ActionGetResponse,
   ActionPostRequest,
-  ACTIONS_CORS_HEADERS,
   createPostResponse,
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const buyTokensMintActionParamsDefinition = {
+const actionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
   amount: { label: "Amount of tokens to buy", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  buyTokensMintActionParamsDefinition
+  actionParamsDefinition
 );
 
 export const GET = (req: Request) => {
@@ -59,19 +59,11 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      buyTokensMintActionParamsDefinition
+      actionParamsDefinition
     );
 
     if (!paramsResult.ok) {
-      return Response.json(
-        {
-          message: `Missing parameter: ${paramsResult.error.paramName}`,
-        },
-        {
-          status: 400,
-          headers: ACTIONS_CORS_HEADERS,
-        }
-      );
+      return jsonBadResult(`Missing parameter: ${paramsResult.error.paramName}`);
     }
 
     const { amount, saleName } = paramsResult.value;
