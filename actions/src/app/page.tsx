@@ -6,12 +6,12 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center py-24 bg-gray-50 gap-12 text-gray-900">
+    <main className="flex min-h-screen flex-col justify-center items-center py-12 bg-gray-50 gap-12 text-gray-900">
       <div className="flex flex-row items-center gap-8">
         <Image
           src="/solana-olympics-gray.svg"
           alt="Vercel Logo"
-          className="w-40"
+          className="w-32"
           width={160}
           height={160}
           priority
@@ -25,7 +25,7 @@ export default function Home() {
           </h1>
         </div>
       </div>
-      <div className="flex flex-row gap-16">
+      <div className="flex flex-row gap-28">
         <div className="flex flex-col gap-6">
           <h2 className="text-center scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             Mint version
@@ -121,8 +121,6 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="border-r"></div>
-
         <div className="flex flex-col gap-6">
           <h2 className="text-center scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             Vault version
