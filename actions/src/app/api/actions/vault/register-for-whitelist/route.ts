@@ -1,4 +1,4 @@
-import { getMintSaleProgram } from "@/programs/programs";
+import { getVaultSaleProgram } from "@/programs/programs";
 import {
   getActionParametersFromDefinition,
   getActionParametersFromRequest,
@@ -11,7 +11,6 @@ import {
   jsonBadResult,
   jsonResponseWithHeaders,
 } from "@/shared/utils";
-import { BN } from "@coral-xyz/anchor";
 import {
   ActionGetResponse,
   ActionPostRequest,
@@ -19,31 +18,26 @@ import {
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const createWhitelistSaleMintActionParamsDefinition = {
-  mint: { label: "Token mint", required: true },
+const actionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
-  lamportsPerToken: { label: "Price of 1 token in lamports", required: true },
-  maxTokensPerBuyer: { label: "Maximum tokens per buyer", required: true },
-  maxBuyers: { label: "Maximum number of buyers", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  createWhitelistSaleMintActionParamsDefinition
+  actionParamsDefinition
 );
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getActionImageUrl(req),
-    label: "Create whitelist sale",
-    description:
-      "Use this action to create a whitelist token sale in which the program will have mint authority until the sale is closed.",
-    title: "Create whitelist sale (mint version)",
+    label: "Register for whitelist",
+    description: "Use this action to register for a whitelist token sale.",
+    title: "Register for whitelist (vault version)",
     links: {
       actions: [
         {
-          label: "Create whitelist sale",
+          label: "Register for whitelist",
           href: getUrlWithRequestOrigin(
-            getActionQuery(actionUrls.mint.createWhitelist, params),
+            getActionQuery(actionUrls.vault.registerForWhitelist, params),
             req
           ),
           parameters: params,
@@ -61,30 +55,23 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      createWhitelistSaleMintActionParamsDefinition
+      actionParamsDefinition
     );
 
     if (!paramsResult.ok) {
       return jsonBadResult(`Missing parameter: ${paramsResult.error.paramName}`);
     }
 
-    const { mint, lamportsPerToken, maxBuyers, maxTokensPerBuyer, saleName } =
-      paramsResult.value;
+    const { saleName } = paramsResult.value;
 
     const body: ActionPostRequest = await req.json();
     const signer = new PublicKey(body.account);
-    const mintAddr = new PublicKey(mint);
 
-    const { program, connection } = getMintSaleProgram();
+    const { program, connection } = getVaultSaleProgram();
 
     const instruction = await program.methods
-      .createWhitelistSale(
-        saleName,
-        new BN(lamportsPerToken),
-        new BN(maxTokensPerBuyer),
-        new BN(maxBuyers)
-      )
-      .accounts({ signer, tokenMint: mintAddr })
+      .registerForWhitelist(saleName)
+      .accounts({ signer })
       .instruction();
 
     const transaction = new Transaction();
@@ -98,7 +85,7 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Created a whitelist sale named ${saleName} with token mint ${mint}. Mint authority has been transferred to the program until the sale is closed.`,
+        message: `You are registered for whitelist on sale named ${saleName}.`,
       },
     });
 

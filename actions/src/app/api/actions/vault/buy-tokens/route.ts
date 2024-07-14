@@ -1,4 +1,5 @@
-import { getMintSaleProgram } from "@/programs/programs";
+import { getVaultSaleStateAddress } from "@/programs/accounts";
+import { getVaultSaleProgram } from "@/programs/programs";
 import {
   getActionParametersFromDefinition,
   getActionParametersFromRequest,
@@ -8,42 +9,39 @@ import {
   getActionImageUrl,
   getActionQuery,
   getUrlWithRequestOrigin,
-  jsonBadResult,
   jsonResponseWithHeaders,
 } from "@/shared/utils";
 import { BN } from "@coral-xyz/anchor";
 import {
   ActionGetResponse,
   ActionPostRequest,
+  ACTIONS_CORS_HEADERS,
   createPostResponse,
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const createWhitelistSaleMintActionParamsDefinition = {
-  mint: { label: "Token mint", required: true },
+const actionParamsDefinition = {
   saleName: { label: "Sale name", required: true },
-  lamportsPerToken: { label: "Price of 1 token in lamports", required: true },
-  maxTokensPerBuyer: { label: "Maximum tokens per buyer", required: true },
-  maxBuyers: { label: "Maximum number of buyers", required: true },
+  amount: { label: "Amount of tokens to buy", required: true },
 };
 
 const params = getActionParametersFromDefinition(
-  createWhitelistSaleMintActionParamsDefinition
+  actionParamsDefinition
 );
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
     icon: getActionImageUrl(req),
-    label: "Create whitelist sale",
+    label: "Buy tokens from sale",
     description:
-      "Use this action to create a whitelist token sale in which the program will have mint authority until the sale is closed.",
-    title: "Create whitelist sale (mint version)",
+      "Use this action to buy tokens from a sale you are whitelisted on.",
+    title: "Buy tokens from sale (vault version)",
     links: {
       actions: [
         {
-          label: "Create whitelist sale",
+          label: "Buy tokens from sale",
           href: getUrlWithRequestOrigin(
-            getActionQuery(actionUrls.mint.createWhitelist, params),
+            getActionQuery(actionUrls.vault.buyTokens, params),
             req
           ),
           parameters: params,
@@ -61,30 +59,36 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      createWhitelistSaleMintActionParamsDefinition
+      actionParamsDefinition
     );
 
     if (!paramsResult.ok) {
-      return jsonBadResult(`Missing parameter: ${paramsResult.error.paramName}`);
+      return Response.json(
+        {
+          message: `Missing parameter: ${paramsResult.error.paramName}`,
+        },
+        {
+          status: 400,
+          headers: ACTIONS_CORS_HEADERS,
+        }
+      );
     }
 
-    const { mint, lamportsPerToken, maxBuyers, maxTokensPerBuyer, saleName } =
-      paramsResult.value;
+    const { amount, saleName } = paramsResult.value;
 
     const body: ActionPostRequest = await req.json();
     const signer = new PublicKey(body.account);
-    const mintAddr = new PublicKey(mint);
 
-    const { program, connection } = getMintSaleProgram();
+    const { program, connection } = getVaultSaleProgram();
+
+    const salePdaAddress = getVaultSaleStateAddress(saleName, program);
+    const salePda = await program.account.whitelistSale.fetch(salePdaAddress);
+
+    const mint = salePda.tokenMint;
 
     const instruction = await program.methods
-      .createWhitelistSale(
-        saleName,
-        new BN(lamportsPerToken),
-        new BN(maxTokensPerBuyer),
-        new BN(maxBuyers)
-      )
-      .accounts({ signer, tokenMint: mintAddr })
+      .buyTokens(saleName, new BN(amount))
+      .accounts({ signer, tokenMint: mint })
       .instruction();
 
     const transaction = new Transaction();
@@ -98,7 +102,7 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Created a whitelist sale named ${saleName} with token mint ${mint}. Mint authority has been transferred to the program until the sale is closed.`,
+        message: `You successfully bought ${amount} tokens!`,
       },
     });
 

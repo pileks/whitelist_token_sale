@@ -1,4 +1,4 @@
-import { getMintSaleProgram } from "@/programs/programs";
+import { getVaultSaleProgram } from "@/programs/programs";
 import {
   getActionParametersFromDefinition,
   getActionParametersFromRequest,
@@ -19,7 +19,7 @@ import {
 } from "@solana/actions";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
-const createWhitelistSaleMintActionParamsDefinition = {
+const actionParamsDefinition = {
   mint: { label: "Token mint", required: true },
   saleName: { label: "Sale name", required: true },
   lamportsPerToken: { label: "Price of 1 token in lamports", required: true },
@@ -28,7 +28,7 @@ const createWhitelistSaleMintActionParamsDefinition = {
 };
 
 const params = getActionParametersFromDefinition(
-  createWhitelistSaleMintActionParamsDefinition
+  actionParamsDefinition
 );
 
 export const GET = (req: Request) => {
@@ -36,14 +36,14 @@ export const GET = (req: Request) => {
     icon: getActionImageUrl(req),
     label: "Create whitelist sale",
     description:
-      "Use this action to create a whitelist token sale in which the program will have mint authority until the sale is closed.",
-    title: "Create whitelist sale (mint version)",
+      "Use this action to create a whitelist token sale in which the program will keep the tokens you're selling inside a vault until the sale is closed.",
+    title: "Create whitelist sale (vault version)",
     links: {
       actions: [
         {
           label: "Create whitelist sale",
           href: getUrlWithRequestOrigin(
-            getActionQuery(actionUrls.mint.createWhitelist, params),
+            getActionQuery(actionUrls.vault.createWhitelist, params),
             req
           ),
           parameters: params,
@@ -61,7 +61,7 @@ export const POST = async (req: Request) => {
   try {
     const paramsResult = getActionParametersFromRequest(
       req,
-      createWhitelistSaleMintActionParamsDefinition
+      actionParamsDefinition
     );
 
     if (!paramsResult.ok) {
@@ -75,7 +75,7 @@ export const POST = async (req: Request) => {
     const signer = new PublicKey(body.account);
     const mintAddr = new PublicKey(mint);
 
-    const { program, connection } = getMintSaleProgram();
+    const { program, connection } = getVaultSaleProgram();
 
     const instruction = await program.methods
       .createWhitelistSale(
@@ -98,7 +98,7 @@ export const POST = async (req: Request) => {
     const payload = await createPostResponse({
       fields: {
         transaction,
-        message: `Created a whitelist sale named ${saleName} with token mint ${mint}. Mint authority has been transferred to the program until the sale is closed.`,
+        message: `Created a whitelist sale named "${saleName}" with token mint ${mint}. Tokens for sale are kept inside the program's vault until the sale is closed.`,
       },
     });
 

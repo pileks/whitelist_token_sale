@@ -25,7 +25,7 @@ export default function Home() {
           </h1>
         </div>
       </div>
-      <div className="flex flex-row gap-4">
+      <div className="flex flex-row gap-16">
         <div className="flex flex-col gap-6">
           <h2 className="text-center scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
             Mint version
@@ -113,6 +113,103 @@ export default function Home() {
               <Link
                 href={getDialToUrlForAction(
                   process.env.NEXT_PUBLIC_WEBSITE_URL + actionUrls.mint.buyTokens
+                )}
+              >
+                Buy tokens
+              </Link>
+            </Button>
+          </div>
+        </div>
+        
+        <div className="border-r"></div>
+
+        <div className="flex flex-col gap-6">
+          <h2 className="text-center scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">
+            Vault version
+          </h2>
+
+          <div className="flex flex-col gap-4">
+            <h3 className="text-center scroll-m-20 text-2xl font-semibold tracking-tight">
+              Owner controls
+            </h3>
+            <Button asChild>
+              <Link
+                href={getDialToUrlForAction(
+                  process.env.NEXT_PUBLIC_WEBSITE_URL +
+                    actionUrls.vault.createWhitelist
+                )}
+              >
+                Create whitelist sale
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link
+                href={getDialToUrlForAction(
+                  process.env.NEXT_PUBLIC_WEBSITE_URL +
+                    actionUrls.vault.closeWhitelistSale
+                )}
+              >
+                Close whitelist sale
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link
+                href={getDialToUrlForAction(
+                  process.env.NEXT_PUBLIC_WEBSITE_URL +
+                    actionUrls.vault.openWhitelist
+                )}
+              >
+                Open whitelist registration
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link
+                href={getDialToUrlForAction(
+                  process.env.NEXT_PUBLIC_WEBSITE_URL +
+                    actionUrls.vault.closeWhitelist
+                )}
+              >
+                Close whitelist registration
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link
+                href={getDialToUrlForAction(
+                  process.env.NEXT_PUBLIC_WEBSITE_URL + actionUrls.vault.openSale
+                )}
+              >
+                Open purchasing
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link
+                href={getDialToUrlForAction(
+                  process.env.NEXT_PUBLIC_WEBSITE_URL + actionUrls.vault.closeSale
+                )}
+              >
+                Close purchasing
+              </Link>
+            </Button>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <h3 className="text-center scroll-m-20 text-2xl font-semibold tracking-tight">
+              User controls
+            </h3>
+            <Button asChild>
+              <Link
+                href={getDialToUrlForAction(
+                  process.env.NEXT_PUBLIC_WEBSITE_URL +
+                    actionUrls.vault.registerForWhitelist
+                )}
+              >
+                Register for whitelist
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link
+                href={getDialToUrlForAction(
+                  process.env.NEXT_PUBLIC_WEBSITE_URL + actionUrls.vault.buyTokens
                 )}
               >
                 Buy tokens
